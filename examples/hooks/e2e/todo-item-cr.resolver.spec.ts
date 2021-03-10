@@ -19,7 +19,7 @@ describe('TodoItemResolver (hooks - e2e)', () => {
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
-      imports: [AppModule.forRoot()],
+      imports: [AppModule.forRoot({useCustomResolver: true})],
     }).compile();
 
     app = moduleRef.createNestApplication();

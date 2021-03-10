@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { DynamicModule, Module } from '@nestjs/common';
 import { GraphQLModule } from '@nestjs/graphql';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { GqlContext } from './auth/auth.guard';
@@ -15,8 +15,14 @@ import { typeormOrmConfig } from '../../helpers';
       context: ({ req }: { req: { headers: Record<string, string> } }): GqlContext => ({ request: req }),
     }),
     SubTaskModule,
-    TodoItemModule,
     TagModule,
   ],
 })
-export class AppModule {}
+export class AppModule {
+  static forRoot(opts: { useCustomResolver?: boolean } = {}): DynamicModule {
+    return {
+      module: AppModule,
+      imports: [TodoItemModule.forRoot(opts)],
+    };
+  }
+}
