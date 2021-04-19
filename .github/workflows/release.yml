@@ -1,0 +1,71 @@
+name: CD
+
+on:
+  push:
+    tags:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - uses: actions/checkout@v2
+
+#      - name: Configure CI Git User
+#        run: |
+#          git config --global user.name '@bennypowers'
+#          git config --global user.email 'bennypowers@users.noreply.github.com'
+#          git remote set-url origin https://$GITHUB_ACTOR:$GITHUB_PAT@github.com/bennypowers/apollo-elements
+#        env:
+#          GITHUB_PAT: ${{ secrets.GITHUB_PAT }}
+
+#      - name: Checkout and pull branch
+#        run: git checkout "${GITHUB_REF:11}" && git pull
+
+      - name: Get npm cache directory
+        id: npm-cache
+        run: |
+          echo "::set-output name=dir::$(npm config get cache)"
+      - name: Restore Dependencies
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.npm-cache.outputs.dir }}
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - run: npm install
+      - run: npm run bootstrap
+
+      - name: Build
+        run: npm run build
+
+      - name: Pack
+        run: ./pack.sh
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            release/*.tgz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}name
+
+
+#      - name: Authenticate with Registry
+#        run: |
+#          yarn logout
+#          echo "@apollo-elements:registry=http://registry.npmjs.org/" > .npmrc
+#          echo "registry=http://registry.npmjs.org/" >> .npmrc
+#          echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> .npmrc
+#          npm whoami
+#        env:
+#          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+#
+#      - name: Publish package
+#        run: lerna publish --yes --message 'chore: release new versions'
+#        env:
+#          GH_TOKEN: ${{ secrets.GITHUB_PAT }}
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_PAT }}
+#          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
